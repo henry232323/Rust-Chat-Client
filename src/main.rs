@@ -12,27 +12,29 @@ fn main() {
     let _ = stream.set_read_timeout(Some(Duration::from_millis(20)));
     let mut running: bool = true;
 
-    let writebuffer = String();
+    let mut writebuffer = String::new();
 
     let (sender, receiver) = channel();
 
     let t = thread::spawn(move || {
         let mstdin = io::stdin();
 
+
         while running {
             let mut tbuffer = String::new();
             mstdin.read_line(&mut tbuffer).unwrap();
-            sender.send(tbuffer.trim_end() + "\r\n").unwrap();
+            sender.send(String::from(tbuffer.trim_end())).unwrap();
+            sender.send(String::from("\r\n")).unwrap();
         }
     });
 
     while running {
-        while Ok(popped) = receiver.try_recv() {
-            writebuffer.push(popped);
+        while let Ok(popped) = receiver.try_recv() {
+            writebuffer.push_str(&popped);
         }
 
         if let Some(index) = writebuffer.find("\r\n") {
-            *writebuffer = {
+            writebuffer = {
                 let (msg, rest) = writebuffer.split_at(index);
                 if msg == "QUIT\r\n" {
                     running = false;
